@@ -1,5 +1,5 @@
 ---
-title: "Data Science Portfolio"
+title: "Edward B. Quinn, PhD, MPH"
 listing:
   contents: posts
   sort: "date desc"
