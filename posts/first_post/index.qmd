@@ -1,6 +1,7 @@
 ---
-title: my first post
-author: Edward B. Quinn, PhD, MPH
+title: "Epigenetic Analysis in the Democratic Republic of Congo"
+author: "Edward B. Quinn, PhD, MPH"
 date: 07/30/2023
-draft: true
+draft: false
+categories: [R]
 ---

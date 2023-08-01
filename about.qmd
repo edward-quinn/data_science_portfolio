@@ -13,6 +13,9 @@ about:
     - icon: mortarboard-fill
       text: Google Scholar
       href: https://scholar.google.com/citations?hl=en&user=sL13dZIAAAAJ&view_op=list_works&sortby=pubdate
+    - icon: envelope
+      text: Contact Me
+      href: mailto:edward.bruce.quinn@gmail.com
 ---
 
 About this blog

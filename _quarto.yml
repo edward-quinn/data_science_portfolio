@@ -4,6 +4,17 @@ project:
 website:
   title: "Data Science Portfolio"
   navbar:
+    left: 
+      - text: Home
+        href: index.qmd
+      - text: R
+        href: r_projects.qmd
+      - text: Python
+        href: python_projects.qmd
+      - text: SQL
+        href: sql_projects.qmd
+      - text: Resume
+        href: resume.qmd
     right:
       - about.qmd
       - icon: linkedin
@@ -17,5 +28,5 @@ format:
     theme: minty
     css: styles.css
 
-editor: visual
+editor: source
 
