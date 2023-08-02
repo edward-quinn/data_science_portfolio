@@ -6,5 +6,25 @@
       "/posts/post-with-code/index.html",
       "/posts/welcome/index.html"
     ]
+  },
+  {
+    "listing": "/r_projects.html",
+    "items": [
+      "/r_projects/first_post/index.html",
+      "/r_projects/post-with-code/index.html",
+      "/r_projects/welcome/index.html"
+    ]
+  },
+  {
+    "listing": "/python_projects.html",
+    "items": [
+      "/python_projects/index.html"
+    ]
+  },
+  {
+    "listing": "/sql_projects.html",
+    "items": [
+      "/sql_projects/index.html"
+    ]
   }
 ]

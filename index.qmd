@@ -16,8 +16,12 @@ about:
       text: Google Scholar
       href: https://scholar.google.com/citations?hl=en&user=sL13dZIAAAAJ&view_op=list_works&sortby=pubdate
     - icon: envelope
-      text: Contact Me
+      text: Contact me
       href: mailto:edward.bruce.quinn@gmail.com
 ---
 
-My data science portfolio!!!
+I am a Senior Data Analyst and a published health researcher. My PhD training was in epigenetics and health equity, where I used R to analyze over 400 million data points.
+
+My skill set is currently expanding to include Shiny, SQL, Python, Tableau, and PowerBI. In my spare time, I love to travel and play tennis.
+
+
