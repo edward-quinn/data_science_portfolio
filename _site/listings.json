@@ -1,10 +1,8 @@
 [
   {
-    "listing": "/index.html",
+    "listing": "/python_projects.html",
     "items": [
-      "/posts/first_post/index.html",
-      "/posts/post-with-code/index.html",
-      "/posts/welcome/index.html"
+      "/python_projects/index.html"
     ]
   },
   {
@@ -13,12 +11,6 @@
       "/r_projects/first_post/index.html",
       "/r_projects/post-with-code/index.html",
       "/r_projects/welcome/index.html"
-    ]
-  },
-  {
-    "listing": "/python_projects.html",
-    "items": [
-      "/python_projects/index.html"
     ]
   },
   {
