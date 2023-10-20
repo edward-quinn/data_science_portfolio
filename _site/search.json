@@ -32,7 +32,7 @@
     "href": "r_projects.html",
     "title": "R",
     "section": "",
-    "text": "Epigenetic Analysis in the Democratic Republic of Congo\n\n\n\n\n\n\n\nR\n\n\n\n\n\n\n\n\n\n\n\nJul 30, 2023\n\n\nEdward B. Quinn, PhD, MPH\n\n\n\n\n\n\n  \n\n\n\n\nPost With Code\n\n\n\n\n\n\n\nnews\n\n\ncode\n\n\nanalysis\n\n\n\n\n\n\n\n\n\n\n\nJul 29, 2023\n\n\nHarlow Malloc\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nJul 26, 2023\n\n\nTristan O’Malley\n\n\n\n\n\n\nNo matching items"
+    "text": "Using Machine Learning to Predict Diabetes\n\n\n\n\n\n\n\nR\n\n\n\n\n\n\n\n\n\n\n\nJul 30, 2023\n\n\nEdward B. Quinn, PhD, MPH\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "sql_projects.html",
@@ -40,5 +40,19 @@
     "title": "SQL",
     "section": "",
     "text": "First SQL project\n\n\n\n\n\n\n\nSQL\n\n\n\n\n\n\n\n\n\n\n\nJul 30, 2023\n\n\nEdward B. Quinn, PhD, MPH\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "r_projects/first_post/index.html",
+    "href": "r_projects/first_post/index.html",
+    "title": "Using Machine Learning to Predict Diabetes",
+    "section": "",
+    "text": "Code# Some text"
+  },
+  {
+    "objectID": "r_projects/r_machine_learning/index.html",
+    "href": "r_projects/r_machine_learning/index.html",
+    "title": "Using Machine Learning to Predict Diabetes",
+    "section": "",
+    "text": "Predicting Diabetes\nOne of the most exciting applications of machine learning is in the prediction of disease states. Here, I demonstrate the use of the newest modeling framework in R to compare many different types of models in the prediction of diabetes.\nThe data come from citation and link to full citation footnote.\nLet’s load our libraries.\n\nCode#| include: false\n\nlibrary(tidyverse)\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.2     ✔ readr     2.1.4\n✔ forcats   1.0.0     ✔ stringr   1.5.0\n✔ ggplot2   3.4.4     ✔ tibble    3.2.1\n✔ lubridate 1.9.2     ✔ tidyr     1.3.0\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\nCodelibrary(tidymodels)\n\n── Attaching packages ────────────────────────────────────── tidymodels 1.1.1 ──\n✔ broom        1.0.5     ✔ rsample      1.2.0\n✔ dials        1.2.0     ✔ tune         1.1.2\n✔ infer        1.0.5     ✔ workflows    1.1.3\n✔ modeldata    1.2.0     ✔ workflowsets 1.0.1\n✔ parsnip      1.1.1     ✔ yardstick    1.2.0\n✔ recipes      1.0.8     \n── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──\n✖ scales::discard() masks purrr::discard()\n✖ dplyr::filter()   masks stats::filter()\n✖ recipes::fixed()  masks stringr::fixed()\n✖ dplyr::lag()      masks stats::lag()\n✖ yardstick::spec() masks readr::spec()\n✖ recipes::step()   masks stats::step()\n• Learn how to get started at https://www.tidymodels.org/start/\n\n\nLet’s start simple, with a logistic regression."
   }
 ]

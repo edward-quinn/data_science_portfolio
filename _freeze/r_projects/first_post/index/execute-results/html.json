@@ -1,0 +1,14 @@
+{
+  "hash": "b164490904f35799050ed765eb48d944",
+  "result": {
+    "markdown": "---\ntitle: \"Using Machine Learning to Predict Diabetes\"\nauthor: \"Edward B. Quinn, PhD, MPH\"\ndate: 07/30/2023\ndraft: false\ncategories: [R]\n---\n\n::: {.cell}\n\n```{.r .cell-code}\n# Some text\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

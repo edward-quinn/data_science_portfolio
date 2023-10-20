@@ -1,0 +1,38 @@
+---
+title: "Using Machine Learning to Predict Diabetes"
+author: "Edward B. Quinn, PhD, MPH"
+date: 07/30/2023
+draft: false
+categories: [R]
+---
+
+# Predicting Diabetes
+
+One of the most exciting applications of machine learning is in the prediction of disease states. Here, I demonstrate the use of the newest modeling framework in R to compare many different types of models in the prediction of diabetes.
+
+The data come from citation and link to full citation footnote. 
+
+Let's load our libraries.
+
+```{r}
+
+#| include: false
+
+
+# HOw to suppress package loading messages with quarto?
+
+library(tidyverse)
+library(tidymodels)
+
+```
+
+
+Let's start simple, with a logistic regression.
+
+```{r}
+
+
+```
+
+
+
