@@ -16,20 +16,19 @@ Let's load our libraries.
 
 ```{r}
 
-#| include: false
-
-
-# HOw to suppress package loading messages with quarto?
-
-library(tidyverse)
-library(tidymodels)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(tidymodels))
+tidymodels_prefer()
 
 ```
 
 
-Let's start simple, with a logistic regression.
+Read in the data from Github
 
 ```{r}
+
+
+
 
 
 ```
