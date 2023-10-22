@@ -4,6 +4,11 @@ author: "Edward B. Quinn, PhD, MPH"
 date: 07/30/2023
 draft: false
 categories: [R]
+format: 
+  html:
+    toc: true
+    toc-location: left
+    toc-title: Contents
 ---
 
 # Predicting Diabetes
@@ -18,20 +23,50 @@ Let's load our libraries.
 
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tidymodels))
+suppressPackageStartupMessages(library(RCurl))
+suppressPackageStartupMessages(library(GGally))
+suppressPackageStartupMessages(library(here))
+
+
 tidymodels_prefer()
 
 ```
 
 
-Read in the data from Github
+Read in the data and take a look at the first ten rows:
 
 ```{r}
+#| message: false
 
+df <- read_csv(here("r_projects/r_machine_learning/diabetes.csv"))
 
-
-
+df
 
 ```
+
+
+It is always a good idea to visualize the data as part of exploratory data analysis. 
+
+```{r fig.width=20}
+
+#| message: false
+#| fig-width: 100
+#| fig-height: 100
+#| out-width: "1111%"
+
+
+# ggpairs(df)
+
+ggplot(df, aes(Age, BMI)) +
+  geom_point()
+
+```
+
+
+
+
+
+
 
 
 
