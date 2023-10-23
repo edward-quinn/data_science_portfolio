@@ -51,12 +51,12 @@ suppressPackageStartupMessages(library(GGally))
 suppressPackageStartupMessages(library(DT))
 suppressPackageStartupMessages(library(here))
 
-
+# Deal with conflicting function names across packages:
 tidymodels_prefer()
 
 ```
 
-Read in the data and take a look at the numbers @tbl-datatable.
+Read in the data and take a look at the numbers in @tbl-datatable. A .csv file containing the data can be downloaded [here](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database/data).
 
 ```{r}
 #| message: false
