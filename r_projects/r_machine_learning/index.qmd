@@ -1,7 +1,7 @@
 ---
 title: "Using Machine Learning to Predict Diabetes"
 author: "Edward B. Quinn, PhD, MPH"
-date: 07/30/2023
+date: "Last Updated `r Sys.Date()`"
 draft: false
 categories: [R,Machine Learning,Health]
 format: 
