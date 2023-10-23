@@ -3,7 +3,7 @@ project:
 
 website:
   title: "Data Science Portfolio"
-  favicon: grad_1_mb.jpg
+  favicon: Edward Quinn-min.jpg
   navbar:
     left: 
       - text: Home
