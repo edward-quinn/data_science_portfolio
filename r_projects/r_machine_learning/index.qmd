@@ -49,6 +49,7 @@ suppressPackageStartupMessages(library(tidymodels))
 suppressPackageStartupMessages(library(RCurl))
 suppressPackageStartupMessages(library(GGally))
 suppressPackageStartupMessages(library(DT))
+suppressPackageStartupMessages(library(gtsummary))
 suppressPackageStartupMessages(library(here))
 
 # Deal with conflicting function names across packages:
@@ -61,7 +62,7 @@ Read in the data and take a look at the numbers in @tbl-datatable. A .csv file c
 ```{r}
 #| message: false
 #| label: tbl-datatable
-#| tbl-cap: Raw Data
+#| tbl-cap: Raw Data.
 
 df <- read_csv(here("r_projects/r_machine_learning/diabetes.csv"))
 
@@ -69,39 +70,72 @@ datatable(df)
 
 ```
 
-<br> <br>
+<br>
 
-It is clear clicking on the filtering icons next to each variable name that there are some impossible values. For example, there are people with a BMI of zero. It is likely that missing values are encoded with a zero, and this will need to be addressed later. Also, note that the outcome is encoded as 0 (no diabetes) and 1 (diabetes). Let's change this variable to a factor in R, so that it is interpreted as a binary variable.
+It is clear clicking on the filtering icons next to each variable name that there are some impossible values. For example, there are people with a BMI of zero. It is likely that missing values are encoded with a zero, so let's set values of zero for the variables `Glucose`, `BloodPressure`, `Insulin`, `BMI`, and `SkinThickness` equal to `NA` to indicate missingness.
+
 
 ```{r}
 
 df <- df |> 
-  mutate(Outcome = factor(Outcome, levels = c(0,1),
+  mutate(across(c(Glucose,
+                BloodPressure,
+                Insulin,
+                BMI,
+                SkinThickness), ~na_if(.,0)))
+
+```
+
+Now that we have substituted `NA` for impossible values, let's take a look at some summary statistics for our data. 
+
+```{r}
+
+cols <- colnames(df)
+
+# How to make custom descriptive statistics summary table?
+
+df |> 
+  summarize(across(all_of(cols), list(mean = mean(.x,na.rm = TRUE),
+                                      sd = sd)))
+
+
+```
+
+
+Also, note that the outcome is encoded as 0 (no diabetes) and 1 (diabetes). Let's change this variable to a factor in R. This will facilitate data visualization.
+
+```{r}
+
+df <- df |> 
+  mutate(Diagnosis = factor(Outcome, levels = c(0,1),
                           labels = c("No Diabetes","Diabetes")))
 
 ```
 
-
-
-
-
-
-
-
-
-
-It is always a good idea to visualize the data as part of exploratory data analysis.
+It is always a good idea to visualize the data as part of exploratory data analysis (@fig-pairs_plot).
 
 ```{r}
 #| message: false
-#| fig-width: 12
-#| fig-height: 8
+#| warning: false
+#| fig-width: 10
+#| fig-asp: 1
+#| out-width: "100%"
+#| label: fig-pairs_plot
+#| fig-cap: Pairs plot for all variables in data set.
 
 
-ggpairs(df)
+df |>
+  # Don't need the "Outcome" column right now, use "Diagnosis" instead
+  select(-Outcome) |>
+  ggpairs(mapping = aes(color = Diagnosis, fill = Diagnosis)) +
+  scale_color_brewer(type = "qual",
+                     palette = "Accent") +
+  scale_fill_brewer(type = "qual",
+                     palette = "Accent") +
+  theme_bw()
+
+
+
 
 
 ```
-
-
-
