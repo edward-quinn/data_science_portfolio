@@ -90,13 +90,23 @@ Now that we have substituted `NA` for impossible values, let's take a look at so
 
 ```{r}
 
-cols <- colnames(df)
-
-# How to make custom descriptive statistics summary table?
+# The sample n column is broken.
 
 df |> 
-  summarize(across(all_of(cols), list(mean = mean(.x,na.rm = TRUE),
-                                      sd = sd)))
+  summarise(across(colnames(df), .fns = 
+                     list(n = ~sum(.x, na.rm = TRUE),
+                          Mean = ~mean(.x, na.rm = TRUE),
+                          Median = ~median(.x, na.rm = TRUE),
+                          SD = ~sd(.x, na.rm = TRUE),
+                          Min = ~min(.x, na.rm = TRUE),
+                          Max = ~max(.x, na.rm = TRUE),
+                          q25 = ~quantile(.x, 0.25, na.rm = TRUE), 
+                          q75 = ~quantile(.x, 0.75, na.rm = TRUE)
+                     ))) |>  
+  pivot_longer(everything(), names_sep = "_", names_to = c("variable", ".value")) |> 
+  mutate(across(where(is.numeric), .fns = ~round(.x, digits = 1))) |> 
+  gt::gt()
+
 
 
 ```
