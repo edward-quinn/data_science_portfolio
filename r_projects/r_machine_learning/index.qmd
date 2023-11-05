@@ -14,7 +14,7 @@ bibliography: references.bib
 
 # Introduction
 
-One of the most exciting applications of machine learning is in the prediction of disease states. Here, I demonstrate the use of a new modeling framework in R called `{tidymodels}` to compare multiple different types of machine learning models in their prediction of diabetes.
+One of the most exciting applications of machine learning is in the prediction of disease states. Here, I demonstrate the use of a random forest classifier within a modeling framework in R called `{tidymodels}`. The random forest model will be tuned to predict diabetes diagnosis within five years.
 
 # The Data
 
@@ -49,7 +49,7 @@ suppressPackageStartupMessages(library(tidymodels))
 suppressPackageStartupMessages(library(RCurl))
 suppressPackageStartupMessages(library(GGally))
 suppressPackageStartupMessages(library(DT))
-suppressPackageStartupMessages(library(gtsummary))
+suppressPackageStartupMessages(library(gt))
 suppressPackageStartupMessages(library(here))
 
 # Deal with conflicting function names across packages:
@@ -74,7 +74,6 @@ datatable(df)
 
 It is clear clicking on the filtering icons next to each variable name that there are some impossible values. For example, there are people with a BMI of zero. It is likely that missing values are encoded with a zero, so let's set values of zero for the variables `Glucose`, `BloodPressure`, `Insulin`, `BMI`, and `SkinThickness` equal to `NA` to indicate missingness.
 
-
 ```{r}
 
 df <- df |> 
@@ -86,23 +85,24 @@ df <- df |>
 
 ```
 
-
-How many missing values do we have across our columns now?
+How many missing values do we have in our dataset (@tbl-missing)?
 
 ```{r}
+#| label: tbl-missing
+#| tbl-cap: Number of Missing Values.
 
 df |> 
   summarise(across(everything(), ~ sum(is.na(.x)))) |> 
   pivot_longer(everything(), values_to = "number of missing values") |> 
   mutate(`percent missing` = `number of missing values`/nrow(df)) |> 
-  mutate(across(c(`percent missing`), ~round(.x*100, digits = 1)))
+  mutate(across(c(`percent missing`), ~round(.x*100, digits = 1))) |> 
+  datatable()
 
 ```
 
-Some columns have very few missing values, such as `Glucose`, while others, such as `Insulin` have a very high proportion of missing values. Predictors typically cannot have missing values in machine learning applications, so we will need to estimate what these missing values in our analysis pipeline.
+Some columns have very few missing values, such as `Glucose`, while others, such as `Insulin`, have a very high proportion of missing values. Predictors typically cannot have missing values in machine learning applications, so we will need to estimate these missing values in our analysis pipeline.
 
-
-Let's take a look at some summary statistics for our data in @tbl-summary. 
+Let's take a look at some summary statistics for our data in @tbl-summary.
 
 ```{r}
 #| label: tbl-summary
@@ -125,13 +125,11 @@ df |>
                      ))) |>  
   pivot_longer(everything(), names_sep = "_", names_to = c("variable", ".value")) |> 
   mutate(across(where(is.numeric), .fns = ~round(.x, digits = 1))) |> 
-  gt::gt() |> 
-  gt::opt_stylize(style = 6, color = 'blue')
+  datatable()
 
 
 
 ```
-
 
 Also, note that the outcome is encoded as 0 (no diabetes) and 1 (diabetes). Let's create an additional factor variable for the outcome. This will facilitate data visualization.
 
@@ -148,8 +146,8 @@ It is always a good idea to visualize the data as part of exploratory data analy
 ```{r}
 #| message: false
 #| warning: false
-#| fig-width: 10
-#| fig-asp: 1
+#| fig-width: 13
+#| fig-asp: 0.618
 #| out-width: "100%"
 #| label: fig-pairs_plot
 #| fig-cap: Pairs plot for all variables in data set.
@@ -166,3 +164,77 @@ df |>
   theme_bw()
 
 ```
+
+
+Note the differences in our predictors by Diagnosis, most clearly illustrated in the box plots to the right and the density plots in the bottom two rows.
+
+# Machine Learning
+
+The following code will split the data into training and test sets, and then use cross validation to train a random forest model with the default tuning parameters.
+
+```{r}
+
+set.seed(456)
+
+df_split <- initial_split(data = df, prop = 0.8)
+
+df_train <- training(df_split)
+
+df_test <- testing(df_split)
+
+# Create a model
+rf_model <- 
+  rand_forest() |> 
+  set_engine("randomForest") |> 
+  set_mode("classification")
+
+# Create a recipe
+rf_recipe <-
+  recipe(Diagnosis ~ Pregnancies + Glucose + BloodPressure + SkinThickness +
+                Insulin + BMI + DiabetesPedigreeFunction + Age, 
+         data = df_train) |> 
+  step_impute_knn(Insulin,Glucose,BloodPressure,SkinThickness,BMI,
+                  DiabetesPedigreeFunction,Age)
+
+# Create a workflow
+rf_workflow <-
+  workflow() |> 
+  add_model(rf_model) |> 
+  add_recipe(rf_recipe)
+
+rf_fit <- 
+  fit(rf_workflow, df_train)
+
+df_test_res <- predict(rf_fit, new_data = df_test |> select(-Outcome))
+df_test_res
+
+# Bind predictions to observed data
+df_res <- bind_cols(df_test_res, df_test |>  select(Diagnosis))
+
+conf_mat(df_res, truth = Diagnosis, estimate = .pred_class)
+accuracy(df_res, truth = Diagnosis, estimate = .pred_class)
+
+
+```
+
+
+
+There are several parameters that can be tuned in random forest models, including `mtry`, which is x.
+
+
+
+
+
+Now let's look at the performance of our model.
+
+
+
+
+
+
+
+
+
+
+
+
