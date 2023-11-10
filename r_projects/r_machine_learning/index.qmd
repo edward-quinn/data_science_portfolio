@@ -170,7 +170,7 @@ Note the differences in our predictors by Diagnosis, most clearly illustrated in
 
 # Machine Learning
 
-The following code will split the data into training and test sets, fit a single random forest model to the training data, and then evaluate the model using accuracy.
+The following code will split the data into training and test sets, fit a single random forest model to the training data, and then evaluate the model on the test set using accuracy as a performance metric.
 
 ```{r}
 
@@ -184,7 +184,7 @@ df_test <- testing(df_split)
 
 # Create a model
 rf_model <- 
-  rand_forest(trees = 1000) |> 
+  rand_forest(mtry = 5, min_n = 40, trees = 1000) |> 
   set_engine("randomForest") |> 
   set_mode("classification")
 
@@ -195,7 +195,7 @@ rf_recipe <-
          data = df_train) |> 
   step_impute_knn(Insulin,Glucose,BloodPressure,SkinThickness,BMI,
                   DiabetesPedigreeFunction,Age) |> 
-  step_normalize(all_numeric())
+  step_normalize(all_numeric_predictors())
 
 # Create a workflow
 set.seed(456)
@@ -220,18 +220,12 @@ accuracy(df_res, truth = Diagnosis, estimate = .pred_class)
 
 ```
 
-Our accuracy is 78%, which is substantially better than simply guessing that everyone will not be diagnosed with diabetes. That simple model would have 65% accuracy, so our first pass at a random forest model does represent an improvement in accuracy over the most parsimonious predictive model possible.
-
-There are several parameters of a random forest model that can be tuned, including `mtry`, `trees`, and `min_n`. See documentation for an explanation of these. Let's try tuning these parameters to see if we can improve upon 78% accuracy.
-
-First, set up cross validation and run model using 5-fold cross validation five times.
+Our accuracy is 77.6%, which is substantially better than simply guessing that everyone will not be diagnosed with diabetes. That simple model would have 65.1% accuracy, so our first pass at a random forest model does represent an improvement in accuracy over the most parsimonious model possible. One thing we need to check is the stability of our measure of accuracy, which could be sensitive to the random seed we used. Let's set up 5-fold cross validation (repeated 5 times) to get a more stable estimate of the accuracy of the random forest model.
 
 ```{r}
 
-
-
 set.seed(456)
-df_folds <- vfold_cv(df_train, v = 5, repeats = 5)
+df_folds <- vfold_cv(df_train, v = 5, repeats = 5, strata = Diagnosis)
 df_folds
 
 set.seed(456)
@@ -242,15 +236,17 @@ collect_metrics(rf_cv_fit)
 
 ```
 
+Cross validation suggests that a more stable estimate of the accuracy of our model would be 75.0%, which is still an improvement over guessing that no one will be diagnosed with diabetes within the next five years. Why the dropoff in accuracy? This may be due to the necessarily small sample sizes in the analysis folds used in each iteration.
 
-Now let's try tuning the `mtry` and `min_n` parameters.
+What can we do to improve the accuracy of our model? There are several parameters of a random forest model that can be tuned, including `mtry`, `trees`, and `min_n`. Let's try tuning to see if we can improve upon 75.0% accuracy.
+
 
 ```{r}
 
 
 # Create a model
 rf_model_tune <- 
-  rand_forest(mtry = tune(), min_n = tune(), trees = 1000) |> 
+  rand_forest(mtry = tune(), min_n = tune(), trees = tune()) |> 
   set_engine("randomForest") |> 
   set_mode("classification")
 
@@ -265,25 +261,63 @@ rf_workflow <-
 
 # All operating systems
 library(doParallel)
+library(finetune)
 set.seed(456)
 # Create a cluster object and then register: 
-cl <- makePSOCKcluster(2)
+cl <- makePSOCKcluster(4)
 registerDoParallel(cl)
 
 system.time(
 rf_tune <-
-  tune_grid(rf_workflow,
+  tune_race_anova(rf_workflow,
             resamples = df_folds,
-            grid = 11)
+            grid = 60)
 )
 
 stopCluster(cl)
 
 
+rf_tune |> show_best(metric = "accuracy")
+
+plot_race(rf_tune)
+autoplot(rf_tune)
+
 
 ```
 
+Now let's take the optimal combination of tuning parameter and retrain the model on the entire training data set.
 
+
+```{r}
+
+# the last model
+last_rf_mod <- 
+  rand_forest(mtry = 2, min_n = 23, trees = 1141) |>  
+  set_engine("randomForest") |> 
+  set_mode("classification")
+
+# the last workflow
+last_rf_workflow <- 
+  rf_workflow |>  
+  update_model(last_rf_mod)
+
+# the last fit
+set.seed(456)
+last_rf_fit <- 
+  last_rf_workflow |> 
+  last_fit(df_split)
+
+last_rf_fit |> 
+  collect_metrics()
+
+
+last_rf_fit |> 
+  collect_predictions() |> 
+  roc_curve(Diagnosis, `.pred_No Diabetes`) |> 
+  autoplot()
+
+
+```
 
 
 
