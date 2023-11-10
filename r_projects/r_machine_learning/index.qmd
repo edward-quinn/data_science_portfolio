@@ -166,17 +166,17 @@ df |>
 ```
 
 
-Note the differences in our predictors by Diagnosis, most clearly illustrated in the box plots to the right and the density plots in the bottom two rows.
+Note the differences in our predictors by Diagnosis, most clearly illustrated in the box plots to the right and the density plots in the bottom two rows. This indicates that our predictors may be useful in predicting onset of diabetes.
 
 # Machine Learning
 
-The following code will split the data into training and test sets, and then use cross validation to train a random forest model with the default tuning parameters.
+The following code will split the data into training and test sets, fit a single random forest model to the training data, and then evaluate the model using accuracy.
 
 ```{r}
 
 set.seed(456)
 
-df_split <- initial_split(data = df, prop = 0.8)
+df_split <- initial_split(data = df, prop = 0.75, strata = Diagnosis)
 
 df_train <- training(df_split)
 
@@ -184,7 +184,7 @@ df_test <- testing(df_split)
 
 # Create a model
 rf_model <- 
-  rand_forest() |> 
+  rand_forest(trees = 1000) |> 
   set_engine("randomForest") |> 
   set_mode("classification")
 
@@ -194,13 +194,16 @@ rf_recipe <-
                 Insulin + BMI + DiabetesPedigreeFunction + Age, 
          data = df_train) |> 
   step_impute_knn(Insulin,Glucose,BloodPressure,SkinThickness,BMI,
-                  DiabetesPedigreeFunction,Age)
+                  DiabetesPedigreeFunction,Age) |> 
+  step_normalize(all_numeric())
 
 # Create a workflow
+set.seed(456)
 rf_workflow <-
   workflow() |> 
   add_model(rf_model) |> 
   add_recipe(rf_recipe)
+
 
 rf_fit <- 
   fit(rf_workflow, df_train)
@@ -211,21 +214,75 @@ df_test_res
 # Bind predictions to observed data
 df_res <- bind_cols(df_test_res, df_test |>  select(Diagnosis))
 
-conf_mat(df_res, truth = Diagnosis, estimate = .pred_class)
+
 accuracy(df_res, truth = Diagnosis, estimate = .pred_class)
 
 
 ```
 
+Our accuracy is 78%, which is substantially better than simply guessing that everyone will not be diagnosed with diabetes. That simple model would have 65% accuracy, so our first pass at a random forest model does represent an improvement in accuracy over the most parsimonious predictive model possible.
+
+There are several parameters of a random forest model that can be tuned, including `mtry`, `trees`, and `min_n`. See documentation for an explanation of these. Let's try tuning these parameters to see if we can improve upon 78% accuracy.
+
+First, set up cross validation and run model using 5-fold cross validation five times.
+
+```{r}
 
 
-There are several parameters that can be tuned in random forest models, including `mtry`, which is x.
+
+set.seed(456)
+df_folds <- vfold_cv(df_train, v = 5, repeats = 5)
+df_folds
+
+set.seed(456)
+rf_cv_fit <- 
+  fit_resamples(rf_workflow, df_folds)
+
+collect_metrics(rf_cv_fit)
+
+```
+
+
+Now let's try tuning the `mtry` and `min_n` parameters.
+
+```{r}
+
+
+# Create a model
+rf_model_tune <- 
+  rand_forest(mtry = tune(), min_n = tune(), trees = 1000) |> 
+  set_engine("randomForest") |> 
+  set_mode("classification")
+
+# Create a workflow
+set.seed(456)
+rf_workflow <-
+  workflow() |> 
+  add_model(rf_model_tune) |> 
+  add_recipe(rf_recipe)
 
 
 
+# All operating systems
+library(doParallel)
+set.seed(456)
+# Create a cluster object and then register: 
+cl <- makePSOCKcluster(2)
+registerDoParallel(cl)
+
+system.time(
+rf_tune <-
+  tune_grid(rf_workflow,
+            resamples = df_folds,
+            grid = 11)
+)
+
+stopCluster(cl)
 
 
-Now let's look at the performance of our model.
+
+```
+
 
 
 
