@@ -14,7 +14,7 @@ bibliography: references.bib
 
 # Introduction
 
-One of the most exciting applications of machine learning is in the prediction of disease states. Here, I demonstrate the use of a random forest classifier within a modeling framework in R called `{tidymodels}`. The random forest model will be tuned to predict diabetes diagnosis within five years.
+One of the most exciting applications of machine learning is in the prediction of disease states. Here, I build a random forest classifier using a modeling framework in R called `{tidymodels}`. The random forest model will be tuned to predict diabetes diagnosis within five years.
 
 # The Data
 
@@ -166,7 +166,7 @@ df |>
 ```
 
 
-Note the differences in our predictors by Diagnosis, most clearly illustrated in the box plots to the right and the density plots in the bottom two rows. This indicates that our predictors may be useful in predicting onset of diabetes.
+Note the differences in our predictors by Diagnosis, most clearly illustrated in the box plots to the right and the histograms in the bottom two rows. This indicates that our predictors may be useful in predicting onset of diabetes.
 
 # Machine Learning
 
@@ -185,7 +185,7 @@ df_test <- testing(df_split)
 # Create a model
 rf_model <- 
   rand_forest(mtry = 5, min_n = 40, trees = 1000) |> 
-  set_engine("randomForest") |> 
+  set_engine("ranger") |> 
   set_mode("classification")
 
 # Create a recipe
@@ -208,19 +208,19 @@ rf_workflow <-
 rf_fit <- 
   fit(rf_workflow, df_train)
 
+# Predict outcomes for the test set using the trained model
 df_test_res <- predict(rf_fit, new_data = df_test |> select(-Outcome))
-df_test_res
 
-# Bind predictions to observed data
+# Bind predictions to observed data for the test set
 df_res <- bind_cols(df_test_res, df_test |>  select(Diagnosis))
 
-
+# Get the accuracy
 accuracy(df_res, truth = Diagnosis, estimate = .pred_class)
 
 
 ```
 
-Our accuracy is 77.6%, which is substantially better than simply guessing that everyone will not be diagnosed with diabetes. That simple model would have 65.1% accuracy, so our first pass at a random forest model does represent an improvement in accuracy over the most parsimonious model possible. One thing we need to check is the stability of our measure of accuracy, which could be sensitive to the random seed we used. Let's set up 5-fold cross validation (repeated 5 times) to get a more stable estimate of the accuracy of the random forest model.
+Our accuracy is 80.2%. This an improvement over the simplest model, which would consist of guessing that no one will develop diabetes. The simple model would have 65.1% accuracy, so our first pass at a random forest model does represent an improvement in accuracy over the simple model. One thing we need to check is the stability of our measure of accuracy, which could be sensitive to the random seed we used. Let's set up 5-fold cross validation (repeated 5 times) to get a more stable estimate of the accuracy of the random forest model.
 
 ```{r}
 
@@ -236,40 +236,41 @@ collect_metrics(rf_cv_fit)
 
 ```
 
-Cross validation suggests that a more stable estimate of the accuracy of our model would be 75.0%, which is still an improvement over guessing that no one will be diagnosed with diabetes within the next five years. Why the dropoff in accuracy? This may be due to the necessarily small sample sizes in the analysis folds used in each iteration.
+Cross validation suggests that a more stable estimate of the accuracy of our model would be 75.8%, which is still an improvement over guessing that no one will be diagnosed with diabetes within the next five years. 
 
-What can we do to improve the accuracy of our model? There are several parameters of a random forest model that can be tuned, including `mtry`, `trees`, and `min_n`. Let's try tuning to see if we can improve upon 75.0% accuracy.
+Why the drop in accuracy? This may be due to the necessarily small sample sizes in the analysis folds used in each cross validation iteration.
+
+What can we do to improve the accuracy of our model? There are several parameters of a random forest model that can be tuned, including `mtry`, `trees`, and `min_n`. Let's try tuning to see if we can improve upon 75.8% accuracy.
 
 
 ```{r}
 
-
 # Create a model
 rf_model_tune <- 
   rand_forest(mtry = tune(), min_n = tune(), trees = tune()) |> 
-  set_engine("randomForest") |> 
+  set_engine("ranger") |> 
   set_mode("classification")
 
 # Create a workflow
 set.seed(456)
-rf_workflow <-
+rf_workflow_tune <-
   workflow() |> 
   add_model(rf_model_tune) |> 
   add_recipe(rf_recipe)
 
 
-
 # All operating systems
-library(doParallel)
-library(finetune)
+suppressPackageStartupMessages(library(doParallel))
+suppressPackageStartupMessages(library(finetune))
 set.seed(456)
+
 # Create a cluster object and then register: 
 cl <- makePSOCKcluster(4)
 registerDoParallel(cl)
 
 system.time(
 rf_tune <-
-  tune_race_anova(rf_workflow,
+  tune_race_anova(rf_workflow_tune,
             resamples = df_folds,
             grid = 60)
 )
@@ -277,28 +278,27 @@ rf_tune <-
 stopCluster(cl)
 
 
-rf_tune |> show_best(metric = "accuracy")
-
-plot_race(rf_tune)
-autoplot(rf_tune)
+rf_tune |> 
+  show_best(metric = "accuracy")
 
 
 ```
 
-Now let's take the optimal combination of tuning parameter and retrain the model on the entire training data set.
+
+Now let's take the optimal combination of tuning parameters and retrain the model on the entire training data set.
 
 
 ```{r}
 
 # the last model
 last_rf_mod <- 
-  rand_forest(mtry = 2, min_n = 23, trees = 1141) |>  
-  set_engine("randomForest") |> 
+  rand_forest(mtry = 2, min_n = 36, trees = 1458) |>  
+  set_engine("ranger", importance = "impurity") |> 
   set_mode("classification")
 
 # the last workflow
 last_rf_workflow <- 
-  rf_workflow |>  
+  rf_workflow_tune |>  
   update_model(last_rf_mod)
 
 # the last fit
@@ -319,8 +319,24 @@ last_rf_fit |>
 
 ```
 
+Our accuracy is now 78.6%. Which variables are most important in predicting onset of diabetes within the next five years?
 
+```{r}
 
+suppressPackageStartupMessages(library(vip))
+
+last_rf_fit |> 
+  extract_fit_parsnip() |> 
+  vip(aesthetics = list(fill = "midnightblue", alpha = 0.6)) +
+  theme_classic()
+
+```
+
+Not surprisingly, `Glucose` is the most important variable in predicting onset of diabetes. That's reassuring since diabetes is diagnosed using glucose levels!
+
+# Next Steps
+
+This is a very rough first pass at predicting onset of diabetes using a random forest machine learning model. We could try to improve accuracy in the test set with additional feature engineering, tinkering with preprocessing steps, and using expanded grids when tuning parameters. That's all for now!
 
 
 
