@@ -1,7 +1,7 @@
 ---
-title: "Python"
+title: "Database Management"
 listing:
-  contents: python_projects
+  contents: database_management
   sort: "date desc"
   type: default
   categories: true

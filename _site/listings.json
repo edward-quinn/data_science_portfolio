@@ -16,5 +16,23 @@
     "items": [
       "/sql_projects/index.html"
     ]
+  },
+  {
+    "listing": "/machine_learning.html",
+    "items": [
+      "/machine_learning/index.html"
+    ]
+  },
+  {
+    "listing": "/data_visualization.html",
+    "items": [
+      "/data_visualization/index.html"
+    ]
+  },
+  {
+    "listing": "/database_management.html",
+    "items": [
+      "/database_management/index.html"
+    ]
   }
 ]

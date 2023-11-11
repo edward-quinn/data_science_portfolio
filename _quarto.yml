@@ -8,12 +8,12 @@ website:
     left: 
       - text: Home
         href: index.qmd
-      - text: R
-        href: r_projects.qmd
-      - text: Python
-        href: python_projects.qmd
-      - text: SQL
-        href: sql_projects.qmd
+      - text: Machine Learning
+        href: machine_learning.qmd
+      - text: Data Visualization
+        href: data_visualization.qmd
+      - text: Database Management
+        href: database_management.qmd
       - text: Resume
         href: resume.qmd
 format:
