@@ -6,10 +6,10 @@ website:
   favicon: Edward Quinn-min.jpg
   navbar:
     left: 
-      - text: Home
-        href: index.qmd
       - text: Machine Learning
         href: machine_learning.qmd
+      - text: Dashboards
+        href: dashboards.qmd
       - text: Data Visualization
         href: data_visualization.qmd
       - text: Database Management

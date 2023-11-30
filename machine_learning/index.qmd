@@ -107,11 +107,7 @@ Let's take a look at some summary statistics for our data in @tbl-summary.
 ```{r}
 #| label: tbl-summary
 #| tbl-cap: Descriptive Statistics.
-
-# The sample n column is broken.
-
-# We also need a column counting missingness.
-
+#| 
 df |> 
   summarise(across(colnames(df), .fns = 
                      list(n = ~n(),
@@ -170,7 +166,8 @@ Note the differences in our predictors by Diagnosis, most clearly illustrated in
 
 # Machine Learning
 
-The following code will split the data into training and test sets, fit a single random forest model to the training data, and then evaluate the model on the test set using accuracy as a performance metric.
+The following code will split the data into training and test sets, and then create a 
+{tidymodels} workflow.
 
 ```{r}
 
