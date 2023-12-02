@@ -40,5 +40,11 @@
     "items": [
       "/dashboards/index.html"
     ]
+  },
+  {
+    "listing": "/machine_learning/machine_learning.html",
+    "items": [
+      "/machine_learning/predict diabetes/index.html"
+    ]
   }
 ]
