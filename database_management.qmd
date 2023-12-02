@@ -1,7 +1,7 @@
 ---
 title: "Database Management"
 listing:
-  contents: database_management
+  contents: database_management/**/*.qmd
   sort: "date desc"
   type: default
   categories: true

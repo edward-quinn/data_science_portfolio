@@ -67,7 +67,7 @@ Read in the data and take a look at the numbers in @tbl-datatable. A .csv file c
 #| label: tbl-datatable
 #| tbl-cap: Raw Data.
 
-df <- read_csv(here("machine_learning/diabetes.csv"))
+df <- read_csv(here("machine_learning/diabetes/diabetes.csv"))
 
 datatable(df)
 

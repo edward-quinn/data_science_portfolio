@@ -1,7 +1,7 @@
 ---
 title: "Data Visualization"
 listing:
-  contents: data_visualization
+  contents: data_visualization/**/*.qmd
   sort: "date desc"
   type: default
   categories: true
