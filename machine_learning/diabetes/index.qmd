@@ -46,6 +46,8 @@ The data come from the National Institute of Diabetes Digestive and Kidney Disea
 Let's load our libraries.
 
 ```{r}
+#| warning: false
+#| message: false
 
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tidymodels))
@@ -114,7 +116,7 @@ Let's take a look at some summary statistics for our data in @tbl-summary.
 ```{r}
 #| label: tbl-summary
 #| tbl-cap: Descriptive Statistics.
-#| 
+
 df |> 
   summarise(across(colnames(df), .fns = 
                      list(n = ~n(),
@@ -181,6 +183,8 @@ The following code will:
 3.  Use five-fold cross validation to train the model using a space-filling grid design for candidate tuning parameters
 
 ```{r}
+#| warning: false
+#| message: false
 
 # Step 1
 set.seed(456)
@@ -220,7 +224,7 @@ rf_workflow_tune <-
 # Step 3
 set.seed(456)
 df_folds <- vfold_cv(df_train, v = 5, repeats = 5, strata = Diagnosis)
-df_folds
+
 
 
 
@@ -258,11 +262,13 @@ rf_tune |>
 
 ```
 
-
+<br>
 
 Now let's take the optimal combination of tuning parameters and retrain the model on the entire training data set and then the test data set.
 
 ```{r}
+#| warning: false
+#| message: false
 
 # the last model
 last_rf_mod <- 
@@ -284,7 +290,9 @@ last_rf_fit <-
 
 ```
 
-What do results look like in our training data?
+<br>
+
+How does the final model perform in our training data?
 
 ```{r}
 
@@ -306,8 +314,9 @@ cat("The accuracy of the final model on the training data is",
 
 
 ```
+<br>
 
-What do the results look like in our testing data?
+How does our final model perform in our testing data?
 
 ```{r}
 
@@ -330,9 +339,15 @@ cat("The accuracy of the final model on the testing data is",
 
 ```
 
-Receiver Operating Characteristic (ROC) Curve
+<br>
+
+We can visualize the trade off between sensitivity and specificity using a ROC curve (@fig-roc-curve).
 
 ```{r}
+#| message: false
+#| warning: false
+#| label: fig-roc-curve
+#| fig-cap: Receiver Operating Characteristic Curve
 
 last_rf_fit |>
   collect_predictions() |>
@@ -341,11 +356,15 @@ last_rf_fit |>
 
 ```
 
+<br>
 
-
-Which variables are most important in predicting onset of diabetes within the next five years?
+Which variables are most important in predicting onset of diabetes within the next five years (@fig-vip-plot)?
 
 ```{r}
+#| message: false
+#| warning: false
+#| label: fig-vip-plot
+#| fig-cap: Variable Importance Bar Chart
 
 last_rf_fit |> 
   extract_fit_parsnip() |> 
@@ -358,13 +377,7 @@ Not surprisingly, `Glucose` is the most important variable in predicting onset o
 
 # Next Steps
 
-This is a very rough first pass at predicting onset of diabetes using a random forest machine learning model. We could try to improve accuracy in the test set with additional feature engineering, tinkering with preprocessing steps, and using expanded grids when tuning parameters. That's all for now!
-
-
-
-
-
-
+This is a very rough first pass at predicting onset of diabetes using a random forest machine learning model. Moving forward, we could try to improve accuracy in the test set with additional feature engineering, tinkering with preprocessing steps, and using expanded grids when tuning parameters.
 
 
 
