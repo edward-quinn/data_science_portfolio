@@ -1,7 +1,7 @@
 ---
 title: "Using Machine Learning to Predict Diabetes"
 author: "Edward B. Quinn, PhD, MPH"
-date: "Last Updated `r Sys.Date()`"
+date: "2023-12-02"
 draft: false
 categories: [R,Machine Learning,Health]
 format: 
@@ -53,6 +53,10 @@ suppressPackageStartupMessages(library(RCurl))
 suppressPackageStartupMessages(library(GGally))
 suppressPackageStartupMessages(library(DT))
 suppressPackageStartupMessages(library(gt))
+# All operating systems
+suppressPackageStartupMessages(library(doParallel))
+suppressPackageStartupMessages(library(finetune))
+suppressPackageStartupMessages(library(vip))
 suppressPackageStartupMessages(library(here))
 
 # Deal with conflicting function names across packages:
@@ -140,7 +144,7 @@ df <- df |>
 
 ```
 
-It is always a good idea to visualize the data as part of exploratory data analysis (@fig-pairs_plot).
+It is always a good idea to visualize the data as part of exploratory data analysis (@fig-pairs_plot). Correlations quantify the strength of linear relationships between the predictors, which may differ by outcome.
 
 ```{r}
 #| message: false
@@ -164,16 +168,21 @@ df |>
 
 ```
 
-
-Note the differences in our predictors by Diagnosis, most clearly illustrated in the box plots to the right and the histograms in the bottom two rows. This indicates that our predictors may be useful in predicting onset of diabetes.
+Note the differences in our predictors by `Diagnosis`, most clearly illustrated in the box plots to the right and the histograms in the bottom two rows. This indicates that our predictors may be useful in predicting onset of diabetes.
 
 # Machine Learning
 
-The following code will split the data into training and test sets, and then create a 
-{tidymodels} workflow.
+The following code will:
+
+1.  Split the data into training and test sets
+
+2.  Create a `{tidymodels}` workflow by specifying a machine learning model and a preprocessing pipeline
+
+3.  Use five-fold cross validation to train the model using a space-filling grid design for candidate tuning parameters
 
 ```{r}
 
+# Step 1
 set.seed(456)
 
 df_split <- initial_split(data = df, prop = 0.75, strata = Diagnosis)
@@ -182,9 +191,12 @@ df_train <- training(df_split)
 
 df_test <- testing(df_split)
 
+
+# Step 2
+
 # Create a model
-rf_model <- 
-  rand_forest(mtry = 5, min_n = 40, trees = 1000) |> 
+rf_model_tune <- 
+  rand_forest(mtry = tune(), min_n = tune(), trees = 1500) |> 
   set_engine("ranger") |> 
   set_mode("classification")
 
@@ -199,69 +211,20 @@ rf_recipe <-
 
 # Create a workflow
 set.seed(456)
-rf_workflow <-
-  workflow() |> 
-  add_model(rf_model) |> 
-  add_recipe(rf_recipe)
-
-
-rf_fit <- 
-  fit(rf_workflow, df_train)
-
-# Predict outcomes for the test set using the trained model
-df_test_res <- predict(rf_fit, new_data = df_test |> select(-Outcome))
-
-# Bind predictions to observed data for the test set
-df_res <- bind_cols(df_test_res, df_test |>  select(Diagnosis))
-
-# Get the accuracy
-accuracy(df_res, truth = Diagnosis, estimate = .pred_class)
-
-
-```
-
-Our accuracy is 80.2%. This an improvement over the simplest model, which would consist of guessing that no one will develop diabetes. The simple model would have 65.1% accuracy, so our first pass at a random forest model does represent an improvement in accuracy over the simple model. One thing we need to check is the stability of our measure of accuracy, which could be sensitive to the random seed we used. Let's set up 5-fold cross validation (repeated 5 times) to get a more stable estimate of the accuracy of the random forest model.
-
-```{r}
-
-set.seed(456)
-df_folds <- vfold_cv(df_train, v = 5, repeats = 5, strata = Diagnosis)
-df_folds
-
-set.seed(456)
-rf_cv_fit <- 
-  fit_resamples(rf_workflow, df_folds)
-
-collect_metrics(rf_cv_fit)
-
-```
-
-Cross validation suggests that a more stable estimate of the accuracy of our model would be 75.8%, which is still an improvement over guessing that no one will be diagnosed with diabetes within the next five years. 
-
-Why the drop in accuracy? This may be due to the necessarily small sample sizes in the analysis folds used in each cross validation iteration.
-
-What can we do to improve the accuracy of our model? There are several parameters of a random forest model that can be tuned, including `mtry`, `trees`, and `min_n`. Let's try tuning to see if we can improve upon 75.8% accuracy.
-
-
-```{r}
-
-# Create a model
-rf_model_tune <- 
-  rand_forest(mtry = tune(), min_n = tune(), trees = tune()) |> 
-  set_engine("ranger") |> 
-  set_mode("classification")
-
-# Create a workflow
-set.seed(456)
 rf_workflow_tune <-
   workflow() |> 
   add_model(rf_model_tune) |> 
   add_recipe(rf_recipe)
 
 
-# All operating systems
-suppressPackageStartupMessages(library(doParallel))
-suppressPackageStartupMessages(library(finetune))
+# Step 3
+set.seed(456)
+df_folds <- vfold_cv(df_train, v = 5, repeats = 5, strata = Diagnosis)
+df_folds
+
+
+
+# Train the model
 set.seed(456)
 
 # Create a cluster object and then register: 
@@ -278,21 +241,32 @@ rf_tune <-
 stopCluster(cl)
 
 
-rf_tune |> 
-  show_best(metric = "accuracy")
 
 
 ```
 
+What was the best combination of tuning parameters in our model training?
 
-Now let's take the optimal combination of tuning parameters and retrain the model on the entire training data set.
+```{r}
 
+# Extract the final model
+rf_tune |> 
+  show_best(metric = "accuracy") |> 
+  mutate(across(where(is.numeric), .fns = ~round(.x, digits = 3))) |> 
+  datatable()
+  
+
+```
+
+
+
+Now let's take the optimal combination of tuning parameters and retrain the model on the entire training data set and then the test data set.
 
 ```{r}
 
 # the last model
 last_rf_mod <- 
-  rand_forest(mtry = 2, min_n = 36, trees = 1458) |>  
+  rand_forest(mtry = 2, min_n = 21, trees = 1500) |>  
   set_engine("ranger", importance = "impurity") |> 
   set_mode("classification")
 
@@ -307,23 +281,71 @@ last_rf_fit <-
   last_rf_workflow |> 
   last_fit(df_split)
 
-last_rf_fit |> 
-  collect_metrics()
 
+```
 
-last_rf_fit |> 
-  collect_predictions() |> 
-  roc_curve(Diagnosis, `.pred_No Diabetes`) |> 
-  autoplot()
+What do results look like in our training data?
+
+```{r}
+
+set.seed(456)
+training_set_predictions <- 
+  last_rf_workflow |> 
+  fit(data = df_train) |> 
+  predict(df_train)
+
+# Compare actual outcomes to predicted outcomes
+training_confusion_matrix <- table(Actual = df_train$Diagnosis, Predicted = training_set_predictions$.pred_class)
+
+# Calculate accuracy
+training_accuracy <- sum(diag(training_confusion_matrix)) / sum(training_confusion_matrix)
+
+cat("The accuracy of the final model on the training data is",
+    paste(round(training_accuracy*100, digits = 2), "%", sep = ""))
+
 
 
 ```
 
-Our accuracy is now 78.6%. Which variables are most important in predicting onset of diabetes within the next five years?
+What do the results look like in our testing data?
 
 ```{r}
 
-suppressPackageStartupMessages(library(vip))
+set.seed(456)
+testing_set_predictions <- 
+  last_rf_workflow |> 
+  fit(data = df_train) |> 
+  predict(df_test)
+
+# Compare actual outcomes to predicted outcomes
+testing_confusion_matrix <- table(Actual = df_test$Diagnosis, Predicted = testing_set_predictions$.pred_class)
+
+# Calculate accuracy
+testing_accuracy <- sum(diag(testing_confusion_matrix)) / sum(testing_confusion_matrix)
+
+cat("The accuracy of the final model on the testing data is",
+    paste(round(testing_accuracy*100, digits = 2), "%", sep = ""))
+
+
+
+```
+
+Receiver Operating Characteristic (ROC) Curve
+
+```{r}
+
+last_rf_fit |>
+  collect_predictions() |>
+  roc_curve(Diagnosis, `.pred_No Diabetes`) |>
+  autoplot()
+
+```
+
+
+
+Which variables are most important in predicting onset of diabetes within the next five years?
+
+```{r}
 
 last_rf_fit |> 
   extract_fit_parsnip() |> 
@@ -337,6 +359,10 @@ Not surprisingly, `Glucose` is the most important variable in predicting onset o
 # Next Steps
 
 This is a very rough first pass at predicting onset of diabetes using a random forest machine learning model. We could try to improve accuracy in the test set with additional feature engineering, tinkering with preprocessing steps, and using expanded grids when tuning parameters. That's all for now!
+
+
+
+
 
 
 
