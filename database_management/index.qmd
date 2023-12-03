@@ -1,7 +1,0 @@
----
-title: "Database Management"
-author: "Edward B. Quinn, PhD, MPH"
-date: 07/30/2023
-draft: false
-categories: [Database Management]
----
