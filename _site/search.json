@@ -166,5 +166,12 @@
     "title": "Interactive-sql Example",
     "section": "Not editable example",
     "text": "Not editable example\nYou can also create “not-editable” code chunk (that is, you simply can run the query but won’t be able to edit/modify it) for HR database. And to do this, just use another instance of database under the database key in the yaml with a different name and use the option editable: false. Then all the code chunk with that name as class will be in not-editable mode. View the source code of this document by clicking &lt;/&gt; Code on top-right corner, it will be more clear, what I am trying to say.\n\nselect * from employees;"
+  },
+  {
+    "objectID": "data_visualization/index.html",
+    "href": "data_visualization/index.html",
+    "title": "Data Visualization",
+    "section": "",
+    "text": "Codeplot(cos(1:20))"
   }
 ]

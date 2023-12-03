@@ -5,3 +5,10 @@ date: 07/30/2023
 draft: false
 categories: [Data Visualization]
 ---
+
+```{r}
+
+plot(cos(1:20))
+
+```
+
