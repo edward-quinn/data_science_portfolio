@@ -6,9 +6,17 @@ draft: false
 categories: [Data Visualization]
 ---
 
+
 ```{r}
 
-plot(cos(1:20))
+library(tidycensus)
 
+
+tidycensus::get_acs(
+ geography = "county",
+ variables = "B19013_001",
+ state = "MD",
+ geometry = TRUE
+) 
 ```
 

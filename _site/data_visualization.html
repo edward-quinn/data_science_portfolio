@@ -184,18 +184,18 @@ ul.task-list li input[type="checkbox"] {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="Data Visualization" data-listing-date-sort="1690689600000" data-listing-file-modified-sort="1701612440115" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="1">
+<div class="quarto-post image-right" data-index="0" data-categories="Data Visualization" data-listing-date-sort="1690689600000" data-listing-file-modified-sort="1701737734418" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="1" data-listing-word-count-sort="23">
 <div class="thumbnail">
-<p><a href="./data_visualization/index.html"></a></p><a href="./data_visualization/index.html">
-<p class="card-img-top"><img src="data_visualization\index_files\figure-html\unnamed-chunk-1-1.png"  class="thumbnail-image card-img"/></p>
-</a><p><a href="./data_visualization/index.html"></a></p>
+<p><a href="./data_visualization/map/index.html"></a></p><a href="./data_visualization/map/index.html">
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+</a><p><a href="./data_visualization/map/index.html"></a></p>
 </div>
 <div class="body">
 <h3 class="no-anchor listing-title">
-<a href="./data_visualization/index.html">Data Visualization</a>
+<a href="./data_visualization/map/index.html">Data Visualization</a>
 </h3>
 <div class="listing-subtitle">
-<a href="./data_visualization/index.html"></a>
+<a href="./data_visualization/map/index.html"></a>
 </div>
 <div class="listing-categories">
 <div class="listing-category" onclick="window.quartoListingCategory('Data Visualization'); return false;">
@@ -203,16 +203,23 @@ Data Visualization
 </div>
 </div>
 <div class="listing-description">
-<a href="./data_visualization/index.html">
-<details open=""><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="fu">plot</span><span class="op">(</span><span class="fu">cos</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</details><div class="cell-output-display">
-<p></p>
-</div>
-</a>
+<a href="./data_visualization/map/index.html">
+<details open=""><summary>Code</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r code-with-copy"><code class="sourceCode R"><span><span class="kw">library</span><span class="op">(</span><span class="va">tidycensus</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="fu">tidycensus</span><span class="fu">::</span><span class="fu">get_acs</span><span class="op">(</span></span>
+<span> geography <span class="op">=</span> <span class="st">"tract"</span>,</span>
+<span> variables <span class="op">=</span> <span class="st">"B19013_001"</span>,</span>
+<span> state <span class="op">=</span> <span class="st">"IL"</span>,</span>
+<span> geometry <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span> <span class="fu">mapview</span><span class="fu">::</span><span class="fu">mapview</span><span class="op">(</span></span>
+<span> zcol <span class="op">=</span> <span class="st">"estimate"</span>,</span>
+<span> …<span class="op"></span><span class="st"></span></span><span><span class="op"></span></span></code></pre></div></details><div class="cell-output cell-output-stderr"><pre><code></code></pre></div><div class="cell-output cell-output-stderr"><pre><code></code></pre></div><div class="cell-output cell-output-stderr"><pre><code></code></pre></div><div class="cell-output cell-output-stdout"><pre><code></code></pre></div><div class="cell-output-display"><div class="leaflet html-widget html-fill-item" id="htmlwidget-d933e11715e863aba1cf" style="width:100%;height:464px;"></div><script type="application/json" data-for="htmlwidget-d933e11715e863aba1cf"></script></div></a>
 </div>
 </div>
 <div class="metadata">
-<a href="./data_visualization/index.html">
+<a href="./data_visualization/map/index.html">
 <div class="listing-date">
 Jul 30, 2023
 </div>
