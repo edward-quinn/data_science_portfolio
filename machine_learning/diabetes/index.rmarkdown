@@ -1,0 +1,414 @@
+---
+title: "Using Machine Learning to Predict Diabetes"
+author: "Edward B. Quinn, PhD, MPH"
+date: "2023-12-02"
+draft: false
+categories: [R,Machine Learning,Health]
+format: 
+  html:
+    toc: true
+    toc-location: left
+    toc-title: Contents
+bibliography: references.bib
+lightbox: true
+---
+
+
+# Introduction
+
+One of the most exciting applications of machine learning is in the prediction of disease states. Here, I build a random forest classifier using a modeling framework in R called `{tidymodels}`. The random forest model will be tuned to predict diabetes diagnosis within five years.
+
+# The Data
+
+The data come from the National Institute of Diabetes Digestive and Kidney Diseases [@smith1988]. There are 768 Pima Indian women included in the data set. Here's a list of the variables:
+
+-   `Pregnancies` - Number of pregnancies
+
+-   `Glucose` - Plasma glucose in mg/dl two hours after an oral glucose tolerance test
+
+-   `BloodPressure` - Diastolic blood pressure in mm Hg
+
+-   `SkinThickness` - Triceps skinfold thickness; a measure of body fat
+
+-   `Insulin` - Two hour serum insulin
+
+-   `BMI` - Body mass index
+
+-   `DiabetesPedigreeFunction` - A measure of family history of diabetes
+
+-   `Age` - Measured in years
+
+-   `Outcome` - An indicator variable for diabetes diagnosis
+
+# Exploratory Data Analysis
+
+Let's load our libraries.
+
+
+```{r}
+#| warning: false
+#| message: false
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(tidymodels))
+suppressPackageStartupMessages(library(RCurl))
+suppressPackageStartupMessages(library(GGally))
+suppressPackageStartupMessages(library(DT))
+suppressPackageStartupMessages(library(gt))
+# All operating systems
+suppressPackageStartupMessages(library(doParallel))
+suppressPackageStartupMessages(library(finetune))
+suppressPackageStartupMessages(library(vip))
+suppressPackageStartupMessages(library(here))
+
+# Deal with conflicting function names across packages:
+tidymodels_prefer()
+
+```
+
+
+Read in the data and take a look at the numbers in @tbl-datatable. A .csv file containing the data can be downloaded [here](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database/data).
+
+
+```{r}
+#| message: false
+#| label: tbl-datatable
+#| tbl-cap: Raw Data.
+
+df <- read_csv(here("machine_learning/diabetes/diabetes.csv"))
+
+datatable(df)
+
+```
+
+
+<br>
+
+It is clear clicking on the filtering icons next to each variable name that there are some impossible values. For example, there are people with a BMI of zero. It is likely that missing values are encoded with a zero, so let's set values of zero for the variables `Glucose`, `BloodPressure`, `Insulin`, `BMI`, and `SkinThickness` equal to `NA` to indicate missingness.
+
+
+```{r}
+
+df <- df |> 
+  mutate(across(c(Glucose,
+                BloodPressure,
+                Insulin,
+                BMI,
+                SkinThickness), ~na_if(.,0)))
+
+```
+
+
+How many missing values do we have in our dataset (@tbl-missing)?
+
+
+```{r}
+#| label: tbl-missing
+#| tbl-cap: Number of Missing Values.
+
+df |> 
+  summarise(across(everything(), ~ sum(is.na(.x)))) |> 
+  pivot_longer(everything(), values_to = "number of missing values") |> 
+  mutate(`percent missing` = `number of missing values`/nrow(df)) |> 
+  mutate(across(c(`percent missing`), ~round(.x*100, digits = 1))) |> 
+  datatable()
+
+```
+
+
+Some columns have very few missing values, such as `Glucose`, while others, such as `Insulin`, have a very high proportion of missing values. Predictors typically cannot have missing values in machine learning applications, so we will need to estimate these missing values in our analysis pipeline.
+
+Let's take a look at some summary statistics for our data in @tbl-summary.
+
+
+```{r}
+#| label: tbl-summary
+#| tbl-cap: Descriptive Statistics.
+
+df |> 
+  summarise(across(colnames(df), .fns = 
+                     list(n = ~n(),
+                          Mean = ~mean(.x, na.rm = TRUE),
+                          Median = ~median(.x, na.rm = TRUE),
+                          SD = ~sd(.x, na.rm = TRUE),
+                          Min = ~min(.x, na.rm = TRUE),
+                          Max = ~max(.x, na.rm = TRUE),
+                          q25 = ~quantile(.x, 0.25, na.rm = TRUE), 
+                          q75 = ~quantile(.x, 0.75, na.rm = TRUE)
+                     ))) |>  
+  pivot_longer(everything(), names_sep = "_", names_to = c("variable", ".value")) |> 
+  mutate(across(where(is.numeric), .fns = ~round(.x, digits = 1))) |> 
+  datatable()
+
+
+
+```
+
+
+Also, note that the outcome is encoded as 0 (no diabetes) and 1 (diabetes). Let's create an additional factor variable for the outcome. This will facilitate data visualization.
+
+
+```{r}
+
+df <- df |> 
+  mutate(Diagnosis = factor(Outcome, levels = c(0,1),
+                          labels = c("No Diabetes","Diabetes")))
+
+```
+
+
+It is always a good idea to visualize the data as part of exploratory data analysis (@fig-pairs_plot). Correlations quantify the strength of linear relationships between the predictors, which may differ by outcome.
+
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-width: 13
+#| fig-asp: 0.618
+#| out-width: "100%"
+#| label: fig-pairs_plot
+#| fig-cap: Pairs plot for all variables in data set.
+
+
+df |>
+  # Don't need the "Outcome" column right now, use "Diagnosis" instead
+  select(-Outcome) |>
+  ggpairs(mapping = aes(color = Diagnosis, fill = Diagnosis)) +
+  scale_color_brewer(type = "qual",
+                     palette = "Accent") +
+  scale_fill_brewer(type = "qual",
+                     palette = "Accent") +
+  theme_bw()
+
+```
+
+
+Note the differences in our predictors by `Diagnosis`, most clearly illustrated in the box plots to the right and the histograms in the bottom two rows. This indicates that our predictors may be useful in predicting onset of diabetes.
+
+# Machine Learning
+
+The following code will:
+
+1.  Split the data into training and test sets
+
+2.  Create a `{tidymodels}` workflow by specifying a machine learning model and a preprocessing pipeline
+
+3.  Use five-fold cross validation to train the model using a space-filling grid design for candidate tuning parameters
+
+
+```{r}
+#| warning: false
+#| message: false
+
+# Step 1
+set.seed(456)
+
+df_split <- initial_split(data = df, prop = 0.75, strata = Diagnosis)
+
+df_train <- training(df_split)
+
+df_test <- testing(df_split)
+
+
+# Step 2
+
+# Create a model
+rf_model_tune <- 
+  rand_forest(mtry = tune(), min_n = tune(), trees = 1500) |> 
+  set_engine("ranger") |> 
+  set_mode("classification")
+
+# Create a recipe
+rf_recipe <-
+  recipe(Diagnosis ~ Pregnancies + Glucose + BloodPressure + SkinThickness +
+                Insulin + BMI + DiabetesPedigreeFunction + Age, 
+         data = df_train) |> 
+  step_impute_knn(Insulin,Glucose,BloodPressure,SkinThickness,BMI,
+                  DiabetesPedigreeFunction,Age) |> 
+  step_normalize(all_numeric_predictors())
+
+# Create a workflow
+set.seed(456)
+rf_workflow_tune <-
+  workflow() |> 
+  add_model(rf_model_tune) |> 
+  add_recipe(rf_recipe)
+
+
+# Step 3
+set.seed(456)
+df_folds <- vfold_cv(df_train, v = 5, repeats = 5, strata = Diagnosis)
+
+
+
+
+# Train the model
+set.seed(456)
+
+# Create a cluster object and then register: 
+cl <- makePSOCKcluster(4)
+registerDoParallel(cl)
+
+system.time(
+rf_tune <-
+  tune_race_anova(rf_workflow_tune,
+            resamples = df_folds,
+            grid = 60)
+)
+
+stopCluster(cl)
+
+
+
+
+```
+
+
+What was the best combination of tuning parameters in our model training?
+
+
+```{r}
+
+# Extract the final model
+rf_tune |> 
+  show_best(metric = "accuracy") |> 
+  mutate(across(where(is.numeric), .fns = ~round(.x, digits = 3))) |> 
+  datatable()
+  
+
+```
+
+
+<br>
+
+Now let's take the optimal combination of tuning parameters and retrain the model on the entire training data set and then the test data set.
+
+
+```{r}
+#| warning: false
+#| message: false
+
+# the last model
+last_rf_mod <- 
+  rand_forest(mtry = 2, min_n = 21, trees = 1500) |>  
+  set_engine("ranger", importance = "impurity") |> 
+  set_mode("classification")
+
+# the last workflow
+last_rf_workflow <- 
+  rf_workflow_tune |>  
+  update_model(last_rf_mod)
+
+# the last fit
+set.seed(456)
+last_rf_fit <- 
+  last_rf_workflow |> 
+  last_fit(df_split)
+
+
+```
+
+
+<br>
+
+How does the final model perform in our training data?
+
+
+```{r}
+
+set.seed(456)
+training_set_predictions <- 
+  last_rf_workflow |> 
+  fit(data = df_train) |> 
+  predict(df_train)
+
+# Compare actual outcomes to predicted outcomes
+training_confusion_matrix <- table(Actual = df_train$Diagnosis, Predicted = training_set_predictions$.pred_class)
+
+# Calculate accuracy
+training_accuracy <- sum(diag(training_confusion_matrix)) / sum(training_confusion_matrix)
+
+cat("The accuracy of the final model on the training data is",
+    paste(round(training_accuracy*100, digits = 2), "%", sep = ""))
+
+
+
+```
+
+<br>
+
+How does our final model perform in our testing data?
+
+
+```{r}
+
+set.seed(456)
+testing_set_predictions <- 
+  last_rf_workflow |> 
+  fit(data = df_train) |> 
+  predict(df_test)
+
+# Compare actual outcomes to predicted outcomes
+testing_confusion_matrix <- table(Actual = df_test$Diagnosis, Predicted = testing_set_predictions$.pred_class)
+
+# Calculate accuracy
+testing_accuracy <- sum(diag(testing_confusion_matrix)) / sum(testing_confusion_matrix)
+
+cat("The accuracy of the final model on the testing data is",
+    paste(round(testing_accuracy*100, digits = 2), "%", sep = ""))
+
+
+
+```
+
+
+<br>
+
+We can visualize the trade off between sensitivity and specificity using a ROC curve (@fig-roc-curve).
+
+
+```{r}
+#| message: false
+#| warning: false
+#| label: fig-roc-curve
+#| fig-cap: Receiver Operating Characteristic Curve
+
+last_rf_fit |>
+  collect_predictions() |>
+  roc_curve(Diagnosis, `.pred_No Diabetes`) |>
+  autoplot()
+
+```
+
+
+<br>
+
+Which variables are most important in predicting onset of diabetes within the next five years (@fig-vip-plot)?
+
+
+```{r}
+#| message: false
+#| warning: false
+#| label: fig-vip-plot
+#| fig-cap: Variable Importance Bar Chart
+
+last_rf_fit |> 
+  extract_fit_parsnip() |> 
+  vip(aesthetics = list(fill = "midnightblue", alpha = 0.6)) +
+  theme_classic()
+
+```
+
+
+Not surprisingly, `Glucose` is the most important variable in predicting onset of diabetes. That's reassuring since diabetes is diagnosed using glucose levels!
+
+# Next Steps
+
+This is a very rough first pass at predicting onset of diabetes using a random forest machine learning model. Moving forward, we could try to improve accuracy in the test set with additional feature engineering, tinkering with preprocessing steps, and using expanded grids when tuning parameters.
+
+
+
+
+
+
+

@@ -38,7 +38,8 @@
   {
     "listing": "/dashboards.html",
     "items": [
-      "/dashboards/index.html"
+      "/dashboards/shiny_live_python/index.html",
+      "/dashboards/shiny_live_r/index.html"
     ]
   },
   {

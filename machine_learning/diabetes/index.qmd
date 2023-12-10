@@ -10,9 +10,7 @@ format:
     toc-location: left
     toc-title: Contents
 bibliography: references.bib
-filters:
-   - lightbox
-lightbox: auto
+lightbox: true
 ---
 
 # Introduction
