@@ -1,0 +1,33 @@
+---
+title: "Progress in Public Health"
+author: "Edward B. Quinn, PhD, MPH"
+date: 12/17/2023
+draft: false
+categories: [Data Visualization, R]
+---
+
+```{r}
+#| include: false
+#| message: false
+
+library(tidyverse)
+
+```
+
+
+```{r}
+#| message: false
+
+df <- read_csv("https://data.cdc.gov/resource/6rkc-nb2q.csv")
+
+```
+
+
+```{r}
+
+ggplot(df, aes(year, age_adjusted_death_rate, color = leading_causes)) +
+  geom_point() +
+  geom_line()
+
+```
+

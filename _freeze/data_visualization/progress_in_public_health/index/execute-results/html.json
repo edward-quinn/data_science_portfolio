@@ -1,0 +1,17 @@
+{
+  "hash": "ca6903a1b1f16d6e043b1f1a1bb50588",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Progress in Public Health\"\nauthor: \"Edward B. Quinn, PhD, MPH\"\ndate: 12/17/2023\ndraft: false\ncategories: [Data Visualization, R]\n---\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\ndf <- read_csv(\"https://data.cdc.gov/resource/6rkc-nb2q.csv\")\n```\n:::\n\n::: {.cell}\n\n```{.r .cell-code}\nggplot(df, aes(year, age_adjusted_death_rate, color = leading_causes)) +\n  geom_point() +\n  geom_line()\n```\n\n::: {.cell-output-display}\n![](index_files/figure-html/unnamed-chunk-3-1.png){width=672}\n:::\n:::\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,5 +1,5 @@
 ---
-title: "Data Visualization"
+title: "The Social Determinants of Health"
 author: "Edward B. Quinn, PhD, MPH"
 date: 07/30/2023
 draft: false

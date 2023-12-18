@@ -67,7 +67,7 @@
     "href": "data_visualization.html",
     "title": "Data Visualization",
     "section": "",
-    "text": "Data Visualization\n\n\n\n\n\n\nData Visualization\n\n\n\n\n\n\n\n\n\nJul 30, 2023\n\n\nEdward B. Quinn, PhD, MPH\n\n\n\n\n\n\nNo matching items"
+    "text": "Progress in Public Health\n\n\n\n\n\n\nData Visualization\n\n\nR\n\n\n\n\n\n\n\n\n\nDec 17, 2023\n\n\nEdward B. Quinn, PhD, MPH\n\n\n\n\n\n\n\n\n\n\n\n\nData Visualization\n\n\n\n\n\n\nData Visualization\n\n\n\n\n\n\n\n\n\nJul 30, 2023\n\n\nEdward B. Quinn, PhD, MPH\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "database_management.html",
@@ -194,5 +194,12 @@
     "title": "Shinylive in Quarto example",
     "section": "",
     "text": "This is a Shinylive application embedded in a Quarto doc.\n#| standalone: true\n\nfrom shiny import *\n\napp_ui = ui.page_fluid(\n    ui.input_slider(\"n\", \"N\", 0, 100, 40),\n    ui.output_text_verbatim(\"txt\"),\n)\n\ndef server(input, output, session):\n    @output\n    @render.text\n    def txt():\n        return f\"The value of n*2 is {input.n() * 2}\"\n\napp = App(app_ui, server)"
+  },
+  {
+    "objectID": "data_visualization/progress_in_public_health/index.html",
+    "href": "data_visualization/progress_in_public_health/index.html",
+    "title": "Progress in Public Health",
+    "section": "",
+    "text": "Codedf &lt;- read_csv(\"https://data.cdc.gov/resource/6rkc-nb2q.csv\")\n\n\n\nCodeggplot(df, aes(year, age_adjusted_death_rate, color = leading_causes)) +\n  geom_point() +\n  geom_line()"
   }
 ]
